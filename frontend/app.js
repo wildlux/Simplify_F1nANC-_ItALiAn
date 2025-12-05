@@ -1857,6 +1857,13 @@ function changeMode(mode) {
         'develop': 'Sviluppo'
     };
     showNotification(`Modalità cambiata: ${modeNames[mode]}`, 'success');
+
+    // Messaggio specifico per modalità matematica
+    if (mode === 'math') {
+        setTimeout(() => {
+            showNotification('Scrivi una semplice espressione matematica con un uguale all\'inizio per calcolare', 'info');
+        }, 1000);
+    }
 }
 
 function changeModel(model) {
