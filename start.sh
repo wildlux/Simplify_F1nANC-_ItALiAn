@@ -116,54 +116,66 @@ if ! ollama list 2>/dev/null | grep -q "llama3.2"; then
     ollama pull llama3.2:3b
 fi
 
-# Avvia Backend
-log "Avvio backend in corso..."
-cd backend
+# Verifica se backend già in esecuzione
+if curl -s http://localhost:5005/api/health > /dev/null 2>&1; then
+    success "Backend già in esecuzione sulla porta 5005"
+else
+    # Avvia Backend
+    log "Avvio backend in corso..."
+    cd backend
 
-# Crea ambiente virtuale se necessario
-if [ ! -d "venv" ]; then
-    log "Creo ambiente virtuale..."
-    python3 -m venv venv
+    # Crea ambiente virtuale se necessario
+    if [ ! -d "venv" ]; then
+        log "Creo ambiente virtuale..."
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install --quiet -r requirements.txt
+    fi
+
     source venv/bin/activate
     pip install --quiet -r requirements.txt
+    python -c "import numpy, requests" || { echo "Errore: pacchetti Python non installati"; exit 1; }
+    ./venv/bin/python server.py > ../logs/backend.log 2>&1 &
+    BACKEND_PID=$!
+
+    cd ..
+    sleep 15
+
+    # Verifica Backend
+    if ! curl -s http://localhost:5005/api/health > /dev/null 2>&1; then
+        error "Backend non risponde - controlla logs/backend.log"
+        kill $BACKEND_PID 2>/dev/null || true
+        exit 1
+    fi
+
+    success "Backend avviato correttamente sulla porta 5005"
 fi
 
-source venv/bin/activate
-pip install --quiet -r requirements.txt
-python -c "import numpy, requests" || { echo "Errore: pacchetti Python non installati"; exit 1; }
-./venv/bin/python server.py > ../logs/backend.log 2>&1 &
-BACKEND_PID=$!
+# Verifica se frontend già in esecuzione
+if curl -s http://localhost:8080 > /dev/null 2>&1; then
+    success "Frontend già in esecuzione sulla porta 8080"
+else
+    # Avvia Frontend
+    log "Avvio Frontend..."
+    cd frontend
+    python3 -m http.server 8080 > ../logs/frontend.log 2>&1 &
+    FRONTEND_PID=$!
 
-cd ..
-sleep 15
+    cd ..
+    sleep 2
 
-# Verifica Backend
-if ! curl -s http://localhost:5005/api/health > /dev/null 2>&1; then
-    error "Backend non risponde - controlla logs/backend.log"
-    kill $BACKEND_PID 2>/dev/null || true
-    exit 1
+    # Verifica Frontend
+    if ! curl -s http://localhost:8080 > /dev/null 2>&1; then
+        error "Frontend non risponde - controlla logs/frontend.log"
+        kill $FRONTEND_PID 2>/dev/null || true
+        if [ ! -z "$BACKEND_PID" ]; then
+            kill $BACKEND_PID 2>/dev/null || true
+        fi
+        exit 1
+    fi
+
+    success "Frontend avviato (porta 8080)"
 fi
-
-success "Backend avviato correttamente sulla porta 5005"
-
-# Avvia Frontend
-log "Avvio Frontend..."
-cd frontend
-python3 -m http.server 8080 > ../logs/frontend.log 2>&1 &
-FRONTEND_PID=$!
-
-cd ..
-sleep 2
-
-# Verifica Frontend
-if ! curl -s http://localhost:8080 > /dev/null 2>&1; then
-    error "Frontend non risponde - controlla logs/frontend.log"
-    kill $FRONTEND_PID 2>/dev/null || true
-    kill $BACKEND_PID 2>/dev/null || true
-    exit 1
-fi
-
-success "Frontend avviato (porta 8080)"
 
 # Successo!
 echo ""
@@ -193,8 +205,13 @@ echo ""
 cleanup() {
     echo ""
     log "Arresto sistema..."
-    kill $FRONTEND_PID 2>/dev/null || true
-    kill $BACKEND_PID 2>/dev/null || true
+    # Uccidi solo i processi avviati da questo script
+    if [ ! -z "$FRONTEND_PID" ]; then
+        kill $FRONTEND_PID 2>/dev/null || true
+    fi
+    if [ ! -z "$BACKEND_PID" ]; then
+        kill $BACKEND_PID 2>/dev/null || true
+    fi
     if [ ! -z "$OLLAMA_PID" ]; then
         kill $OLLAMA_PID 2>/dev/null || true
     fi

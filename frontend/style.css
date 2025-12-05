@@ -696,6 +696,104 @@ code {
     --border-light: #be185d;
 }
 
+.theme-military-light {
+    --primary: #556b2f;
+    --secondary: #6b8e23;
+    --bg-dark: #f0f8e0;
+    --bg-darker: #e8f5d8;
+    --surface: #ffffff;
+    --surface-light: #f5f9f0;
+    --text: #2f4f2f;
+    --text-secondary: #556b2f;
+    --text-muted: #6b8e23;
+    --border: #9acd32;
+    --border-light: #b0c44d;
+}
+
+.theme-military-dark {
+    --primary: #556b2f;
+    --secondary: #6b8e23;
+    --bg-dark: #1a2e1a;
+    --bg-darker: #0f1f0f;
+    --surface: #2d4a2d;
+    --surface-light: #3d5a3d;
+    --text: #d4ed91;
+    --text-secondary: #b0c44d;
+    --text-muted: #9acd32;
+    --border: #556b2f;
+    --border-light: #6b8e23;
+}
+
+.theme-red-muted {
+    --primary: #8b4513;
+    --secondary: #a0522d;
+    --bg-dark: #2d1b1b;
+    --bg-darker: #1a0f0f;
+    --surface: #4a2a2a;
+    --surface-light: #6b3a3a;
+    --text: #f5e6d3;
+    --text-secondary: #d2b48c;
+    --text-muted: #cd853f;
+    --border: #8b4513;
+    --border-light: #a0522d;
+}
+
+.theme-venom-green {
+    --primary: #00ff00;
+    --secondary: #39ff14;
+    --bg-dark: #0a0a0a;
+    --bg-darker: #000000;
+    --surface: #1a1a1a;
+    --surface-light: #2a2a2a;
+    --text: #ffffff;
+    --text-secondary: #c0c0c0;
+    --text-muted: #808080;
+    --border: #00ff00;
+    --border-light: #39ff14;
+}
+
+.theme-venom-orange {
+    --primary: #ff4500;
+    --secondary: #ff6347;
+    --bg-dark: #0a0a0a;
+    --bg-darker: #000000;
+    --surface: #1a1a1a;
+    --surface-light: #2a2a2a;
+    --text: #ffffff;
+    --text-secondary: #c0c0c0;
+    --text-muted: #808080;
+    --border: #ff4500;
+    --border-light: #ff6347;
+}
+
+.theme-venom-blue {
+    --primary: #00bfff;
+    --secondary: #1e90ff;
+    --bg-dark: #0a0a0a;
+    --bg-darker: #000000;
+    --surface: #1a1a1a;
+    --surface-light: #2a2a2a;
+    --text: #ffffff;
+    --text-secondary: #c0c0c0;
+    --text-muted: #808080;
+    --border: #00bfff;
+    --border-light: #1e90ff;
+}
+
+.theme-venom-red {
+    --primary: #ff0000;
+    --secondary: #dc143c;
+    --bg-dark: #0a0a0a;
+    --bg-darker: #000000;
+    --surface: #1a1a1a;
+    --surface-light: #2a2a2a;
+    --text: #ffffff;
+    --text-secondary: #c0c0c0;
+    --text-muted: #808080;
+    --border: #ff0000;
+    --border-light: #dc143c;
+}
+
 /* Modal */
 .modal {
     display: none;

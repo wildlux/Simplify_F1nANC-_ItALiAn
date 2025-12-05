@@ -13,6 +13,10 @@ import numpy as np
 import base64
 from io import BytesIO
 import subprocess
+import matplotlib
+matplotlib.use('Agg')  # Backend per server senza display
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "llama3.2:3b"
@@ -129,6 +133,54 @@ def generate_3d_parametric_data(func_x="cos(t)", func_y="sin(t)", func_z="t", t_
     except Exception as e:
         return {"error": f"Errore nella generazione della curva parametrica: {str(e)}"}
 
+def generate_matplotlib_plot(chart_data, chart_type='line'):
+    """Genera un grafico con Matplotlib come in JupyterLab e lo restituisce come base64"""
+    try:
+        plt.figure(figsize=(10, 6))
+        plt.style.use('default')  # Stile simile a Jupyter
+
+        data = chart_data.get('datasets', [])
+        labels = chart_data.get('labels', [])
+
+        if chart_type == 'line':
+            for dataset in data:
+                if labels:
+                    plt.plot(labels, dataset['data'], label=dataset.get('label', ''))
+                else:
+                    plt.plot(dataset['data'], label=dataset.get('label', ''))
+        elif chart_type == 'bar':
+            for i, dataset in enumerate(data):
+                if labels:
+                    x = labels
+                else:
+                    x = range(len(dataset['data']))
+                plt.bar([xi + i*0.2 for xi in x], dataset['data'], width=0.2, label=dataset.get('label', ''))
+        elif chart_type == 'scatter':
+            for dataset in data:
+                x = [p[0] for p in dataset['data']]
+                y = [p[1] for p in dataset['data']]
+                plt.scatter(x, y, label=dataset.get('label', ''))
+        elif chart_type == 'pie':
+            for dataset in data:
+                plt.pie(dataset['data'], labels=labels, autopct='%1.1f%%')
+
+        plt.title(chart_data.get('title', 'Grafico'))
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+
+        # Salva come base64
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        plt.close()
+
+        return f"data:image/png;base64,{image_base64}"
+
+    except Exception as e:
+        return f"Errore generazione grafico: {str(e)}"
+
 def create_3d_chart_response(chart_type, params=None):
     """Crea una risposta JSON con dati per grafico 3D"""
     if params is None:
@@ -144,6 +196,8 @@ def create_3d_chart_response(chart_type, params=None):
         return {"error": f"Tipo di grafico 3D non supportato: {chart_type}"}
 
     return {"chart3d": data}
+
+
 
 def call_ollama(prompt: str, model: str = MODEL):
     payload = {"model": model, "prompt": prompt, "stream": False}
@@ -279,6 +333,24 @@ class AIHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
 
                 response = {"response": response_text, "mode": mode}
+                self.wfile.write(json.dumps(response).encode())
+
+            elif self.path == "/api/matplotlib":
+                content_length = int(self.headers['Content-Length'])
+                post_data = self.rfile.read(content_length)
+                data = json.loads(post_data.decode())
+
+                chart_type = data.get("type", "line")
+                chart_data = data.get("data", {})
+
+                image_url = generate_matplotlib_plot(chart_data, chart_type)
+
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.send_cors_headers()
+                self.end_headers()
+
+                response = {"image": image_url}
                 self.wfile.write(json.dumps(response).encode())
 
             elif self.path == "/api/chart3d":

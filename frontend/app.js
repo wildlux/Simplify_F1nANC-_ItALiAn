@@ -290,6 +290,9 @@ function addMessage(sender, content, showTime = true) {
 
     // Applica syntax highlighting ai nuovi messaggi
     setTimeout(highlightCode, 50);
+
+    // Processa grafici Matplotlib
+    setTimeout(processMatplotlibPlots, 100);
 }
 
 function showTypingIndicator() {
@@ -698,92 +701,11 @@ function detectLanguage(code) {
 
 // ==================== RENDERING GRAFICI ====================
 function renderChart(chartData, chartType = 'line') {
-    const chartId = 'chart-' + Math.random().toString(36).substr(2, 9);
-    const canvasHtml = `<canvas id="${chartId}" style="max-width: 100%; height: 300px;"></canvas>`;
-
-    // Crea il grafico dopo un breve delay per assicurarsi che il DOM sia aggiornato
-    setTimeout(() => {
-        const ctx = document.getElementById(chartId);
-        if (!ctx) return;
-
-        let config = {};
-
-        switch(chartType.toLowerCase()) {
-            case 'bar':
-                config = {
-                    type: 'bar',
-                    data: chartData,
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { position: 'top' },
-                            title: { display: true, text: chartData.title || 'Grafico a Barre' }
-                        },
-                        scales: {
-                            y: { beginAtZero: true }
-                        }
-                    }
-                };
-                break;
-
-            case 'pie':
-            case 'doughnut':
-                config = {
-                    type: chartType,
-                    data: chartData,
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { position: 'right' },
-                            title: { display: true, text: chartData.title || 'Grafico a Torta' }
-                        }
-                    }
-                };
-                break;
-
-            case 'scatter':
-                config = {
-                    type: 'scatter',
-                    data: chartData,
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { position: 'top' },
-                            title: { display: true, text: chartData.title || 'Grafico a Dispersione' }
-                        },
-                        scales: {
-                            x: { type: 'linear', position: 'bottom' }
-                        }
-                    }
-                };
-                break;
-
-            default: // line
-                config = {
-                    type: 'line',
-                    data: chartData,
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { position: 'top' },
-                            title: { display: true, text: chartData.title || 'Grafico Lineare' }
-                        },
-                        scales: {
-                            y: { beginAtZero: true }
-                        }
-                    }
-                };
-        }
-
-        new Chart(ctx, config);
-    }, 100);
-
-    return `<div class="chart-container" style="margin: 1rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);">
-        ${canvasHtml}
-        <div style="margin-top: 0.5rem; text-align: center;">
-            <button class="btn btn-secondary" onclick="printChart(this)" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
-                <i class="fas fa-print"></i> Stampa
-            </button>
+    // Usa Matplotlib come in JupyterLab
+    const plotId = 'plot-' + Math.random().toString(36).substr(2, 9);
+    return `<div class="matplotlib-plot" id="${plotId}" data-type="${chartType}" data-data='${JSON.stringify(chartData)}' style="text-align: center; margin: 1rem 0;">
+        <div style="padding: 2rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);">
+            <i class="fas fa-chart-line"></i> Generazione grafico...
         </div>
     </div>`;
 }
@@ -1207,6 +1129,65 @@ async function generate3DChart(type = 'surface', customParams = {}) {
         console.error('Errore generazione grafico 3D:', error);
         return `<div class="error-message">Errore nella generazione del grafico 3D: ${error.message}</div>`;
     }
+}
+
+// ==================== PROCESSA GRAFICI MATPLOTLIB ====================
+async function processMatplotlibPlots() {
+    const plots = document.querySelectorAll('.matplotlib-plot');
+    for (const plot of plots) {
+        if (plot.dataset.processed) continue;
+
+        const plotType = plot.dataset.type;
+        const plotData = JSON.parse(plot.dataset.data || '{}');
+
+        try {
+            const response = await fetch(`${API_URL}/api/matplotlib`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: plotType, data: plotData })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                plot.innerHTML = `
+                    <img src="${result.image}" alt="Grafico ${plotType}" style="max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--radius);">
+                    <div style="margin-top: 0.5rem; text-align: center;">
+                        <button class="btn btn-secondary" onclick="printMatplotlibChart('${result.image}')" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                            <i class="fas fa-print"></i> Stampa
+                        </button>
+                    </div>
+                `;
+            } else {
+                plot.innerHTML = '<div style="color: var(--danger);">Errore caricamento grafico</div>';
+            }
+        } catch (e) {
+            plot.innerHTML = '<div style="color: var(--danger);">Errore caricamento grafico</div>';
+        }
+
+        plot.dataset.processed = 'true';
+    }
+}
+
+// ==================== STAMPA GRAFICI MATPLOTLIB ====================
+function printMatplotlibChart(imageSrc) {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Grafico - Assistente AI</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    img { max-width: 100%; height: auto; }
+                </style>
+            </head>
+            <body>
+                <h2>Grafico generato con Matplotlib</h2>
+                <img src="${imageSrc}" alt="Grafico">
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
 }
 
 // ==================== HIGHLIGHT CODICE ====================
@@ -1764,7 +1745,7 @@ function saveConversation(userMsg, aiMsg) {
 }
 
 function toggleTheme() {
-    const themes = ['dark', 'light', 'neon', 'hacker', 'purple', 'orange', 'solar-dark', 'pink'];
+    const themes = ['dark', 'light', 'neon', 'hacker', 'purple', 'orange', 'solar-dark', 'pink', 'military-light', 'military-dark', 'red-muted', 'venom-green', 'venom-orange', 'venom-blue', 'venom-red'];
     const currentIndex = themes.indexOf(currentTheme);
     const nextIndex = (currentIndex + 1) % themes.length;
     currentTheme = themes[nextIndex];
@@ -1776,8 +1757,19 @@ function toggleTheme() {
     showNotification(`Tema cambiato: ${currentTheme}`, 'info');
 }
 
+function changeTheme(value) {
+    if (value === 'random') {
+        randomTheme();
+    } else {
+        currentTheme = value;
+        localStorage.setItem('ai_theme', currentTheme);
+        document.body.className = `theme-${currentTheme}`;
+        showNotification(`Tema: ${currentTheme}`, 'info');
+    }
+}
+
 function randomTheme() {
-    const themes = ['dark', 'light', 'neon', 'hacker', 'purple', 'orange', 'solar-dark', 'pink'];
+    const themes = ['dark', 'light', 'neon', 'hacker', 'purple', 'orange', 'solar-dark', 'pink', 'military-light', 'military-dark', 'red-muted', 'venom-green', 'venom-orange', 'venom-blue', 'venom-red'];
     let newTheme;
     do {
         newTheme = themes[Math.floor(Math.random() * themes.length)];
