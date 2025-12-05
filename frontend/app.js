@@ -1728,12 +1728,18 @@ function closeNewsModal() {
 }
 
 // ==================== CARICAMENTO NOTIZIE ====================
-async function loadFinancialNews() {
+async function loadNews(category = 'economia') {
+    // Aggiorna pulsanti attivi
+    document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+    if (category === 'economia') document.getElementById('btnEconomia').classList.add('active');
+    else if (category === 'sport') document.getElementById('btnSport').classList.add('active');
+    else if (category === 'all') document.getElementById('btnAll').classList.add('active');
+
     const newsContent = document.getElementById('newsContent');
     newsContent.innerHTML = '<div style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Caricamento notizie...</div>';
 
     try {
-        const response = await fetch(`${API_URL}/api/news/finance`, {
+        const response = await fetch(`${API_URL}/api/news/${category}`, {
             headers: {
                 'X-API-Key': apiKey
             }
@@ -1744,13 +1750,18 @@ async function loadFinancialNews() {
         }
 
         const data = await response.json();
-        displayNews(data.news);
+        displayNews(data.news, category);
     } catch (error) {
         newsContent.innerHTML = `<div class="error-message">Errore nel caricamento delle notizie: ${error.message}</div>`;
     }
 }
 
-function displayNews(news) {
+// Mantieni compatibilità con la vecchia funzione
+async function loadFinancialNews() {
+    return loadNews('economia');
+}
+
+function displayNews(news, category = 'economia') {
     const newsContent = document.getElementById('newsContent');
 
     if (!news || news.length === 0) {
@@ -1758,11 +1769,22 @@ function displayNews(news) {
         return;
     }
 
-    let html = '<div class="news-list">';
+    const categoryEmoji = {
+        'economia': '📰',
+        'sport': '⚽',
+        'all': '📄'
+    };
+
+    let html = `<div class="news-header">
+        <h3>${categoryEmoji[category] || '📰'} Notizie ${category.charAt(0).toUpperCase() + category.slice(1)} - ${news.length} articoli</h3>
+    </div>`;
+
+    html += '<div class="news-list">';
     news.forEach(item => {
+        const categoryIcon = item.category === 'economia' ? '💰' : item.category === 'sport' ? '⚽' : '📰';
         html += `
             <div class="news-item">
-                <h4><a href="${item.link}" target="_blank">${item.title}</a></h4>
+                <h4><a href="${item.link}" target="_blank">${item.title}</a> <span class="category-badge">${categoryIcon}</span></h4>
                 <p class="news-meta">${item.source} - ${item.date}</p>
                 <p class="news-summary">${item.summary || 'Nessun riassunto disponibile'}</p>
             </div>

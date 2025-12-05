@@ -433,13 +433,14 @@ def create_3d_chart_response(chart_type, params=None):
 
 
 
-def fetch_financial_news():
-    """Recupera notizie finanziarie da fonti italiane"""
+def fetch_news(category_filter=None):
+    """Recupera notizie da fonti italiane - economia e sport"""
     import feedparser
     import time
     from datetime import datetime
 
     news_sources = [
+        # Fonti economiche
         {
             'name': 'Il Sole 24 Ore',
             'url': 'https://www.ilsole24ore.com/rss/italia.xml',
@@ -454,12 +455,47 @@ def fetch_financial_news():
             'name': 'Corriere Economia',
             'url': 'https://www.corriere.it/rss/economia.xml',
             'category': 'economia'
+        },
+        {
+            'name': 'La Stampa Economia',
+            'url': 'https://www.lastampa.it/rss/economia.xml',
+            'category': 'economia'
+        },
+        {
+            'name': 'Il Messaggero Economia',
+            'url': 'https://www.ilmessaggero.it/rss/economia.xml',
+            'category': 'economia'
+        },
+        {
+            'name': 'Il Fatto Quotidiano Economia',
+            'url': 'https://www.ilfattoquotidiano.it/rss/economia.xml',
+            'category': 'economia'
+        },
+        # Fonti sportive
+        {
+            'name': 'La Gazzetta dello Sport',
+            'url': 'https://www.gazzetta.it/rss/home.xml',
+            'category': 'sport'
+        },
+        {
+            'name': 'Corriere dello Sport',
+            'url': 'https://www.corrieredellosport.it/rss/',
+            'category': 'sport'
+        },
+        {
+            'name': 'La Gazzetta dello Sport - Calciomercato',
+            'url': 'https://www.gazzetta.it/rss/Calciomercato.xml',
+            'category': 'sport'
         }
     ]
 
     all_news = []
 
     for source in news_sources:
+        # Filtra per categoria se specificato
+        if category_filter and source['category'] not in category_filter:
+            continue
+
         try:
             print(f"Fetching news from {source['name']}...")
             feed = feedparser.parse(source['url'])
@@ -495,7 +531,7 @@ def fetch_financial_news():
     # Ordina per data (più recenti prima)
     all_news.sort(key=lambda x: x['date'], reverse=True)
 
-    return all_news[:20]  # Max 20 notizie totali
+    return all_news[:30]  # Max 30 notizie totali
 
 def call_ollama(prompt: str, model: str = MODEL, mode: str = "general"):
     """Chiama Ollama con ottimizzazioni per velocità"""
@@ -909,9 +945,22 @@ class AIHandler(http.server.BaseHTTPRequestHandler):
                     response = {'success': False, 'error': str(e)}
                     self.wfile.write(json.dumps(response).encode())
 
-            elif self.path == "/api/news/finance":
+            elif self.path.startswith("/api/news/"):
                 try:
-                    news = fetch_financial_news()
+                    # Estrai categoria dal path: /api/news/economia, /api/news/sport, /api/news/all
+                    path_parts = self.path.split('/')
+                    category = path_parts[-1] if len(path_parts) > 3 else 'all'
+
+                    if category == 'all':
+                        category_filter = None
+                    elif category == 'economia':
+                        category_filter = ['economia']
+                    elif category == 'sport':
+                        category_filter = ['sport']
+                    else:
+                        category_filter = [category]
+
+                    news = fetch_news(category_filter)
                     self.send_response(200)
                     self.send_header('Content-type', 'application/json')
                     self.send_cors_headers()

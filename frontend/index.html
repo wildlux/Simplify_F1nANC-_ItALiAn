@@ -396,15 +396,17 @@
             </div>
             <div class="news-container">
                 <div class="news-controls">
-                    <button onclick="loadFinancialNews()" class="btn btn-primary">Carica Notizie</button>
+                    <div class="news-category-buttons">
+                        <button onclick="loadNews('economia')" class="btn btn-secondary category-btn active" id="btnEconomia">📰 Economia</button>
+                        <button onclick="loadNews('sport')" class="btn btn-secondary category-btn" id="btnSport">⚽ Sport</button>
+                        <button onclick="loadNews('all')" class="btn btn-primary category-btn" id="btnAll">📄 Tutto</button>
+                    </div>
                     <div class="news-sources">
-                        <label><input type="checkbox" id="sole24ore" checked> Il Sole 24 Ore</label>
-                        <label><input type="checkbox" id="repubblica" checked> Repubblica Economia</label>
-                        <label><input type="checkbox" id="corriere" checked> Corriere Economia</label>
+                        <small>Fonti: Il Sole 24 Ore, Repubblica, Corriere, La Stampa, Il Messaggero, Gazzetta dello Sport, Corriere dello Sport</small>
                     </div>
                 </div>
                 <div id="newsContent" class="news-content">
-                    <p>Clicca "Carica Notizie" per vedere le ultime news finanziarie italiane.</p>
+                    <p>Seleziona una categoria per vedere le ultime notizie italiane.</p>
                 </div>
             </div>
         </div>
