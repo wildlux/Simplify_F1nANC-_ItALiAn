@@ -1347,7 +1347,13 @@ function startVoiceRecognition() {
 
     recognition.onerror = (event) => {
         console.error('Voice recognition error:', event.error);
-        showNotification(`Errore riconoscimento vocale: ${event.error}`, 'error');
+        let errorMsg = 'Errore riconoscimento vocale';
+        if (event.error === 'network') {
+            errorMsg += ': Controlla connessione internet';
+        } else {
+            errorMsg += `: ${event.error}`;
+        }
+        showNotification(errorMsg, 'error');
         stopVoiceRecognition();
     };
 
@@ -1359,9 +1365,7 @@ function startVoiceRecognition() {
 }
 
 function stopVoiceRecognition() {
-    if (recognition) {
-        recognition.stop();
-    }
+    // Since we use timeout, stop is not needed, but reset UI
     isListening = false;
     document.getElementById('voiceIcon').innerHTML = '<i class="fas fa-microphone"></i>';
     document.getElementById('voiceText').textContent = 'Voce';
