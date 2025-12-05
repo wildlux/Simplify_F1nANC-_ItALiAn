@@ -509,6 +509,16 @@ def fetch_news(category_filter=None):
 
         try:
             print(f"Fetching news from {source['name']}...")
+            if feedparser is None:
+                # Notizie fittizie se feedparser non disponibile
+                news_list.append({
+                    'title': f"Notizie {source['category']} - Installa feedparser per aggiornamenti reali",
+                    'description': "Per ricevere notizie reali, installa feedparser: pip install feedparser",
+                    'url': source['url'],
+                    'published': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'source': source['name']
+                })
+                continue
             feed = feedparser.parse(source['url'])
 
             for entry in feed.entries[:5]:  # Max 5 per fonte
@@ -1371,7 +1381,7 @@ def generate_seaborn_surface_3d():
 def run_server():
     try:
         host = os.getenv('SERVER_HOST', '0.0.0.0')
-        port = int(os.getenv('SERVER_PORT', '5005'))
+        port = int(os.getenv('SERVER_PORT', '5008'))
 
         print(f"Starting server on {host}:{port}")
         print("Creating TCPServer...")

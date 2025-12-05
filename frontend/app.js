@@ -2,7 +2,7 @@
 // Versione: 4.0
 
 // ==================== CONFIGURAZIONE ====================
-const API_URL = 'http://localhost:5005';
+const API_URL = 'http://localhost:5008';
 let apiKey = null;
 let currentMode = 'auto';
 let currentTheme = 'dark';
