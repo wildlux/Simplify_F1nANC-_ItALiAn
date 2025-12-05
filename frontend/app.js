@@ -1718,6 +1718,61 @@ function editMessage(buttonElement) {
     showNotification('Messaggio caricato nel campo input per modifica', 'info');
 }
 
+// ==================== MODAL NOTIZIE ====================
+function showNewsModal() {
+    document.getElementById('newsModal').style.display = 'flex';
+}
+
+function closeNewsModal() {
+    document.getElementById('newsModal').style.display = 'none';
+}
+
+// ==================== CARICAMENTO NOTIZIE ====================
+async function loadFinancialNews() {
+    const newsContent = document.getElementById('newsContent');
+    newsContent.innerHTML = '<div style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Caricamento notizie...</div>';
+
+    try {
+        const response = await fetch(`${API_URL}/api/news/finance`, {
+            headers: {
+                'X-API-Key': apiKey
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        displayNews(data.news);
+    } catch (error) {
+        newsContent.innerHTML = `<div class="error-message">Errore nel caricamento delle notizie: ${error.message}</div>`;
+    }
+}
+
+function displayNews(news) {
+    const newsContent = document.getElementById('newsContent');
+
+    if (!news || news.length === 0) {
+        newsContent.innerHTML = '<p>Nessuna notizia disponibile al momento.</p>';
+        return;
+    }
+
+    let html = '<div class="news-list">';
+    news.forEach(item => {
+        html += `
+            <div class="news-item">
+                <h4><a href="${item.link}" target="_blank">${item.title}</a></h4>
+                <p class="news-meta">${item.source} - ${item.date}</p>
+                <p class="news-summary">${item.summary || 'Nessun riassunto disponibile'}</p>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    newsContent.innerHTML = html;
+}
+
 // ==================== TOGGLE AZIONI RAPIDE ====================
 function toggleQuickActions() {
     const quickActions = document.querySelectorAll('.quick-actions .quick-btn:not(.always-visible)');

@@ -197,9 +197,12 @@
               <button class="quick-btn" onclick="showChartMenu()">
                   <i class="fas fa-chart-bar"></i> Esempi di grafici 2D/3D
               </button>
-             <button class="quick-btn" onclick="window.open('code-reader.html', '_blank')">
-                 <i class="fas fa-code"></i> Code Reader
-             </button>
+              <button class="quick-btn" onclick="showNewsModal()">
+                  <i class="fas fa-newspaper"></i> Notizie Finanza
+              </button>
+              <button class="quick-btn" onclick="window.open('code-reader.html', '_blank')">
+                  <i class="fas fa-code"></i> Code Reader
+              </button>
             <button class="quick-btn always-visible" onclick="showHelp()">
                 <i class="fas fa-question-circle"></i> Aiuto
             </button>
@@ -377,6 +380,31 @@
                     <div class="code-example" id="codeExample">
 // Seleziona un grafico per vedere il codice
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- News Modal -->
+    <div id="newsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-newspaper"></i> Notizie Finanza Italiana</h3>
+                <button onclick="closeNewsModal()" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="news-container">
+                <div class="news-controls">
+                    <button onclick="loadFinancialNews()" class="btn btn-primary">Carica Notizie</button>
+                    <div class="news-sources">
+                        <label><input type="checkbox" id="sole24ore" checked> Il Sole 24 Ore</label>
+                        <label><input type="checkbox" id="repubblica" checked> Repubblica Economia</label>
+                        <label><input type="checkbox" id="corriere" checked> Corriere Economia</label>
+                    </div>
+                </div>
+                <div id="newsContent" class="news-content">
+                    <p>Clicca "Carica Notizie" per vedere le ultime news finanziarie italiane.</p>
                 </div>
             </div>
         </div>

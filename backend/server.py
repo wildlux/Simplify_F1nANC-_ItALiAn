@@ -433,6 +433,70 @@ def create_3d_chart_response(chart_type, params=None):
 
 
 
+def fetch_financial_news():
+    """Recupera notizie finanziarie da fonti italiane"""
+    import feedparser
+    import time
+    from datetime import datetime
+
+    news_sources = [
+        {
+            'name': 'Il Sole 24 Ore',
+            'url': 'https://www.ilsole24ore.com/rss/italia.xml',
+            'category': 'economia'
+        },
+        {
+            'name': 'Repubblica Economia',
+            'url': 'https://www.repubblica.it/rss/economia/rss2.0.xml',
+            'category': 'economia'
+        },
+        {
+            'name': 'Corriere Economia',
+            'url': 'https://www.corriere.it/rss/economia.xml',
+            'category': 'economia'
+        }
+    ]
+
+    all_news = []
+
+    for source in news_sources:
+        try:
+            print(f"Fetching news from {source['name']}...")
+            feed = feedparser.parse(source['url'])
+
+            for entry in feed.entries[:5]:  # Max 5 per fonte
+                # Estrai data
+                published = entry.get('published_parsed')
+                if published:
+                    date_str = time.strftime('%Y-%m-%d %H:%M', published)
+                else:
+                    date_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+
+                # Estrai descrizione
+                summary = entry.get('summary', '')
+                if len(summary) > 200:
+                    summary = summary[:200] + '...'
+
+                news_item = {
+                    'title': entry.title,
+                    'link': entry.link,
+                    'summary': summary,
+                    'source': source['name'],
+                    'date': date_str,
+                    'category': source['category']
+                }
+
+                all_news.append(news_item)
+
+        except Exception as e:
+            print(f"Error fetching from {source['name']}: {e}")
+            continue
+
+    # Ordina per data (più recenti prima)
+    all_news.sort(key=lambda x: x['date'], reverse=True)
+
+    return all_news[:20]  # Max 20 notizie totali
+
 def call_ollama(prompt: str, model: str = MODEL, mode: str = "general"):
     """Chiama Ollama con ottimizzazioni per velocità"""
 
@@ -843,6 +907,22 @@ class AIHandler(http.server.BaseHTTPRequestHandler):
                     self.send_cors_headers()
                     self.end_headers()
                     response = {'success': False, 'error': str(e)}
+                    self.wfile.write(json.dumps(response).encode())
+
+            elif self.path == "/api/news/finance":
+                try:
+                    news = fetch_financial_news()
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.send_cors_headers()
+                    self.end_headers()
+                    response = {'news': news}
+                    self.wfile.write(json.dumps(response).encode())
+                except Exception as e:
+                    self.send_response(500)
+                    self.send_cors_headers()
+                    self.end_headers()
+                    response = {'error': f'Errore nel recupero notizie: {str(e)}'}
                     self.wfile.write(json.dumps(response).encode())
 
             else:
