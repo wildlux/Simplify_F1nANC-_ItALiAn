@@ -4,6 +4,19 @@
 
 **Assistente AI Finanziario** è un sistema intelligente per consulenza finanziaria che utilizza Ollama come motore AI e Gunicorn come server WSGI per prestazioni ottimali.
 
+## 📸 Screenshots
+
+![Screenshot 1](SCREENSHOT/Schermata_20251213_231204.png)
+![Screenshot 2](SCREENSHOT/Schermata_20251213_231217.png)
+![Screenshot 3](SCREENSHOT/Schermata_20251213_231233.png)
+![Screenshot 4](SCREENSHOT/Schermata_20251213_231300.png)
+![Screenshot 5](SCREENSHOT/Schermata_20251213_231318.png)
+![Screenshot 6](SCREENSHOT/Schermata_20251213_231341.png)
+![Screenshot 7](SCREENSHOT/Schermata_20251213_231346.png)
+![Screenshot 8](SCREENSHOT/Schermata_20251213_231412.png)
+![Screenshot 9](SCREENSHOT/Schermata_20251213_231429.png)
+![Screenshot 10](SCREENSHOT/Schermata_20251213_231445.png)
+
 ## 📋 Caratteristiche Principali
 
 ✅ **Backend con Gunicorn** - 4 workers × 2 threads = 8 richieste simultanee
