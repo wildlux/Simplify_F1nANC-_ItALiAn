@@ -76,6 +76,16 @@ window.onload = function() {
         }
     };
 
+    // Nascondi status bar allo scroll
+    window.addEventListener('scroll', function() {
+        const statusBar = document.getElementById('statusBar');
+        if (window.scrollY > 150) {
+            statusBar.style.display = 'none';
+        } else {
+            statusBar.style.display = 'flex';
+        }
+    });
+
     // Setup event listeners
     setupEventListeners();
 
