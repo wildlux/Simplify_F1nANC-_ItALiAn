@@ -1,79 +1,69 @@
 #!/bin/bash
-# Script di monitoraggio Assistente AI
 
-echo "📊 MONITORAGGIO ASSISTENTE AI"
-echo "=============================="
-
-# Stato processi
+echo "📊 Stato Sistema Assistente AI"
+echo "========================================"
 echo ""
-echo "🔄 Processi:"
-if pgrep -f "ollama serve" > /dev/null; then
-    echo "  ✅ Ollama: ATTIVO"
+
+BASE_DIR="$HOME/Desktop/Assistente_Finanziario_AI/assistente-ai-completo"
+
+# Controlla backend
+echo "🔍 Backend (porta 54324):"
+if curl -s http://localhost:54324/api/health -H "X-API-Key: demo_key_123" > /dev/null; then
+    echo "  ✅ Backend: ONLINE"
+    
+    # Mostra info dal backend
+    HEALTH_INFO=$(curl -s http://localhost:54324/api/health -H "X-API-Key: demo_key_123")
+    MODEL=$(echo $HEALTH_INFO | grep -o '"model":"[^"]*"' | cut -d'"' -f4)
+    echo "  📋 Modello: $MODEL"
 else
-    echo "  ❌ Ollama: NON ATTIVO"
+    echo "  ❌ Backend: OFFLINE"
 fi
 
-if pgrep -f "server.py" > /dev/null; then
-    echo "  ✅ Backend: ATTIVO (PID: $(pgrep -f "server.py"))"
-else
-    echo "  ❌ Backend: NON ATTIVO"
-fi
-
-if pgrep -f "http.server" > /dev/null; then
-    echo "  ✅ Frontend: ATTIVO (PID: $(pgrep -f "http.server"))"
-else
-    echo "  ❌ Frontend: NON ATTIVO"
-fi
-
-# Stato porte
+# Controlla frontend
 echo ""
-echo "🔌 Porte:"
-if lsof -i :11434 > /dev/null 2>&1; then
-    echo "  ✅ Ollama (11434): APERTA"
+echo "🌐 Frontend (porta 8080):"
+if curl -s http://localhost:8080 > /dev/null; then
+    echo "  ✅ Frontend: ONLINE"
 else
-    echo "  ❌ Ollama (11434): CHIUSA"
+    echo "  ❌ Frontend: OFFLINE"
 fi
-
-if lsof -i :5002 > /dev/null 2>&1; then
-    echo "  ✅ Backend (5002): APERTA"
-else
-    echo "  ❌ Backend (5002): CHIUSA"
-fi
-
-if lsof -i :8080 > /dev/null 2>&1; then
-    echo "  ✅ Frontend (8080): APERTA"
-else
-    echo "  ❌ Frontend (8080): CHIUSA"
-fi
-
-# Test endpoints
-echo ""
-echo "🌐 Endpoint:"
-if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
-    echo "  ✅ Ollama API: OK"
-else
-    echo "  ❌ Ollama API: KO"
-fi
-
-if curl -s http://localhost:5002/api/health > /dev/null 2>&1; then
-    echo "  ✅ Backend API: OK"
-else
-    echo "  ❌ Backend API: KO"
-fi
-
-if curl -s http://localhost:8080 > /dev/null 2>&1; then
-    echo "  ✅ Frontend: OK"
-else
-    echo "  ❌ Frontend: KO"
-fi
-
-# Uso risorse
-echo ""
-echo "💾 Risorse:"
-echo "  CPU: $(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1"%"}')"
-echo "  RAM: $(free | grep Mem | awk '{printf "%.1f%%", $3/$2 * 100.0}')"
-echo "  Disco: $(df / | tail -1 | awk '{printf "%.1f%%", $3/$2 * 100.0}')"
 
 echo ""
-echo "📝 Per avviare: ./start.sh"
-echo "🛑 Per fermare: Ctrl+C nel terminale di avvio"
+echo "📋 Processi attivi:"
+BACKEND_PROCESS=$(pgrep gunicorn | head -1)
+if [ -n "$BACKEND_PROCESS" ]; then
+    echo "  ✅ Backend (Gunicorn): PID $BACKEND_PROCESS"
+else
+    echo "  ❌ Backend (Gunicorn): Non in esecuzione"
+fi
+
+FRONTEND_PROCESS=$(pgrep -f "http.server 8080")
+if [ -n "$FRONTEND_PROCESS" ]; then
+    echo "  ✅ Frontend (HTTP Server): PID $FRONTEND_PROCESS"
+else
+    echo "  ❌ Frontend (HTTP Server): Non in esecuzione"
+fi
+
+echo ""
+echo "📈 Statistiche sistema:"
+echo "  • Memoria totale: $(free -h | awk '/Mem:/ {print $2}')"
+echo "  • Memoria usata:  $(free -h | awk '/Mem:/ {print $3}')"
+echo "  • CPU:           $(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/")% idle"
+
+echo ""
+echo "📁 File di log recenti:"
+if [ -f "$BASE_DIR/logs/gunicorn.log" ]; then
+    echo "  • Backend: $(ls -lh $BASE_DIR/logs/gunicorn.log | awk '{print $5, $6, $7}')"
+fi
+if [ -f "$BASE_DIR/logs/frontend.log" ]; then
+    echo "  • Frontend: $(ls -lh $BASE_DIR/logs/frontend.log | awk '{print $5, $6, $7}')"
+fi
+
+echo ""
+echo "🎯 Comandi rapidi:"
+echo "  • Riavvia:        ./launcher.sh"
+echo "  • Ferma:          ./stop.sh"
+echo "  • Logs backend:   tail -f $BASE_DIR/logs/gunicorn.log"
+echo "  • Logs frontend:  tail -f $BASE_DIR/logs/frontend.log"
+
+exit 0

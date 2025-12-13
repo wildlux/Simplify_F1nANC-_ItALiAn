@@ -1,0 +1,45 @@
+
+  █████╗ ██╗███╗   ██╗███████╗███████╗██╗███╗   ██╗
+ ██╔══██╗██║████╗  ██║██╔════╝██╔════╝██║████╗  ██║
+ ███████║██║██╔██╗ ██║█████╗  █████╗  ██║██╔██╗ ██║
+ ██╔══██║██║██║╚██╗██║██╔══╝  ██╔══╝  ██║██║╚██╗██║
+ ██║  ██║██║██║ ╚████║███████╗███████╗██║██║ ╚████║
+ ╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝╚═╝  ╚═══╝
+
+🎯 Assistente AI - Sistema di Avvio (Stabile)
+==============================================
+
+🛑 Pulizia processi esistenti...
+ 49838 49840 49841✅ Pulizia completata
+
+🚀 Avvio backend con Gunicorn (versione stabile)...
+📋 Backend PID: 50074
+🕒 Attesa avvio backend...
+🧪 Test backend...
+✅ Backend OK - Stabile e pronto
+
+🌐 Avvio frontend...
+📋 Frontend PID: 50094
+🧪 Test frontend...
+✅ Frontend OK
+
+🎉 SISTEMA AVVIATO CON SUCCESSO!
+========================================
+📊 Backend:   http://localhost:54324
+🌐 Frontend:  http://localhost:8080/home.html
+🔐 API Key:   demo_key_123 (per test)
+
+📋 Comandi utili:
+  • Logs backend:   tail -f /home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo/logs/gunicorn.log
+  • Logs frontend:  tail -f /home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo/logs/frontend.log
+  • Accesso:        curl http://localhost:54324/api/health -H 'X-API-Key: demo_key_123'
+
+🔥 Configurazione Gunicorn (Stabile):
+  • Workers:        2 (più stabili)
+  • Threads:        4 per worker
+  • Timeout:        120 secondi
+  • Max richieste:   1000 per worker
+  • Graceful timeout: 30 secondi
+
+💡 Per fermare il sistema:
+  • ./stop.sh

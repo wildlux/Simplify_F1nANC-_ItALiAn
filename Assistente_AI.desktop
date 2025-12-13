@@ -1,0 +1,68 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Assistente AI Finanziario
+Comment=Avvia il sistema Assistente AI con Gunicorn
+Exec=bash -c "cd /home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo && ./launcher_stable.sh"
+Icon=/home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo/ICONA/ICONA.png
+Path=/home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo
+Terminal=true
+Categories=Development;Utility;AI;
+StartupNotify=true
+Keywords=ai;assistente;finanza;ollama;gunicorn;
+
+# Impostazioni per migliorare l'aspetto
+X-GNOME-UsesNotifications=true
+X-GNOME-SingleWindow=false
+X-GNOME-Autostart-enabled=false
+
+# Descrizione estesa
+GenericName=Assistente AI
+GenericName[it]=Assistente AI Finanziario
+Comment[it]=Sistema AI per consulenza finanziaria con Ollama e Gunicorn
+
+# Impostazioni per il terminale
+X-GNOME-Terminal=true
+X-GNOME-Terminal-Exec=gnome-terminal
+X-GNOME-Terminal-WorkingDirectory=/home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo
+
+# Priorità
+X-GNOME-Priority=5
+
+# Autore
+X-GNOME-Author=Assistente AI Team
+X-GNOME-Author-Email=support@assistente-ai.it
+
+# URL
+X-GNOME-Url=https://github.com/tuo-username/assistente-ai
+X-GNOME-Url-Type=homepage
+
+# Copyright
+X-GNOME-Copyright=© 2024 Assistente AI Team
+
+# Licenza
+X-GNOME-License=MIT
+
+# Versione
+X-GNOME-Version=1.0.0
+
+# Azioni personalizzate
+Actions=Stop;Status;Logs;
+
+[Desktop Action Stop]
+Name=Ferma il sistema
+Name[it]=Ferma il sistema
+Exec=bash -c "cd /home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo && ./stop.sh ; bash"
+Icon=system-shutdown
+
+[Desktop Action Status]
+Name=Verifica stato
+Name[it]=Verifica stato
+Exec=bash -c "cd /home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo && ./status.sh ; bash"
+Icon=system-monitor
+
+[Desktop Action Logs]
+Name=Visualizza logs
+Name[it]=Visualizza logs
+Exec=bash -c "cd /home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo && tail -f logs/gunicorn_error.log"
+Icon=text-x-log

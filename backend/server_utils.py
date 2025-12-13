@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-ASSISTENTE AI BACKEND - Server HTTP Semplice
+ASSISTENTE AI BACKEND - Funzioni Utilitarie
+Questo file contiene solo le funzioni utilitarie usate dall'applicazione WSGI
 """
 
-import http.server
-import socketserver
 import json
 import urllib.parse
 import requests
@@ -14,10 +13,18 @@ import base64
 from io import BytesIO
 import subprocess
 import matplotlib
-matplotlib.use('Agg')  # Backend per server senza display
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib import cm
+import tempfile
+import os
+import sys
+from io import StringIO
+import contextlib
+import ast
+import re
+import time
 
 # Import seaborn in modo sicuro (opzionale)
 try:
@@ -27,14 +34,6 @@ try:
 except ImportError:
     SEABORN_AVAILABLE = False
     print("⚠️ Seaborn non disponibile - uso solo matplotlib per grafici 3D")
-import tempfile
-import os
-import sys
-from io import StringIO
-import contextlib
-import ast
-import re
-import time
 
 # 🔐 CARICAMENTO VARIABILI D'AMBIENTE SICURE
 try:
@@ -51,7 +50,7 @@ except Exception as e:
 
 # 🔐 CARICAMENTO CONFIGURAZIONE DA VARIABILI D'AMBIENTE
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434/api/generate')
-MODEL = os.getenv('OLLAMA_MODEL', 'llama3.2:3b')
+MODEL = 'llama3.2:1b'
 
 # API Keys valide caricate dinamicamente
 VALID_API_KEYS = {}
@@ -98,7 +97,7 @@ if not VALID_API_KEYS:
         }
     }
 
-    # Cache intelligente per risposte frequenti
+# Cache intelligente per risposte frequenti
 response_cache = {}
 CACHE_MAX_SIZE = int(os.getenv('CACHE_MAX_SIZE', '100'))
 CACHE_TTL = int(os.getenv('CACHE_TTL_SECONDS', '3600'))
@@ -151,13 +150,10 @@ OLLAMA_CONFIG = {
     "num_gpu": int(os.getenv('OLLAMA_NUM_GPU', '-1'))
 }
 
-
-
 def verify_api_key(api_key):
     """Verifica se l'API key è valida e restituisce le informazioni"""
     if not api_key:
         return None
-
     return VALID_API_KEYS.get(api_key.strip())
 
 def check_permission(api_key, permission):
@@ -165,7 +161,6 @@ def check_permission(api_key, permission):
     key_info = verify_api_key(api_key)
     if not key_info:
         return False
-
     return permission in key_info["permissions"]
 
 SYSTEM_PROMPTS = {
@@ -239,7 +234,7 @@ def get_available_models():
         return models if models else ["llama3.2:3b"]
     except Exception as e:
         print(f"Error getting models: {e}")
-        return ["llama3.2:3b"]  # fallback
+        return ["llama3.2:1b"]  # fallback
 
 def detect_mode(text: str) -> str:
     text_lower = text.lower()
@@ -249,7 +244,6 @@ def detect_mode(text: str) -> str:
         return "finance"
     return "general"
 
-# Funzioni per grafici 3D
 def generate_3d_surface_data(func_str="x**2 + y**2", x_range=(-5, 5), y_range=(-5, 5), points=50):
     """Genera dati per una superficie 3D"""
     try:
@@ -331,54 +325,6 @@ def generate_3d_parametric_data(func_x="cos(t)", func_y="sin(t)", func_z="t", t_
     except Exception as e:
         return {"error": f"Errore nella generazione della curva parametrica: {str(e)}"}
 
-def generate_matplotlib_plot(chart_data, chart_type='line'):
-    """Genera un grafico con Matplotlib come in JupyterLab e lo restituisce come base64"""
-    try:
-        plt.figure(figsize=(10, 6))
-        plt.style.use('default')  # Stile simile a Jupyter
-
-        data = chart_data.get('datasets', [])
-        labels = chart_data.get('labels', [])
-
-        if chart_type == 'line':
-            for dataset in data:
-                if labels:
-                    plt.plot(labels, dataset['data'], label=dataset.get('label', ''))
-                else:
-                    plt.plot(dataset['data'], label=dataset.get('label', ''))
-        elif chart_type == 'bar':
-            for i, dataset in enumerate(data):
-                if labels:
-                    x = labels
-                else:
-                    x = range(len(dataset['data']))
-                plt.bar([xi + i*0.2 for xi in x], dataset['data'], width=0.2, label=dataset.get('label', ''))
-        elif chart_type == 'scatter':
-            for dataset in data:
-                x = [p[0] for p in dataset['data']]
-                y = [p[1] for p in dataset['data']]
-                plt.scatter(x, y, label=dataset.get('label', ''))
-        elif chart_type == 'pie':
-            for dataset in data:
-                plt.pie(dataset['data'], labels=labels, autopct='%1.1f%%')
-
-        plt.title(chart_data.get('title', 'Grafico'))
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-
-        # Salva come base64
-        buffer = BytesIO()
-        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
-        buffer.seek(0)
-        image_base64 = base64.b64encode(buffer.read()).decode('utf-8')
-        plt.close()
-
-        return f"data:image/png;base64,{image_base64}"
-
-    except Exception as e:
-        return f"Errore generazione grafico: {str(e)}"
-
 def create_3d_chart_response(chart_type, params=None):
     """Crea una risposta JSON con dati per grafico 3D"""
     if params is None:
@@ -394,8 +340,6 @@ def create_3d_chart_response(chart_type, params=None):
         return {"error": f"Tipo di grafico 3D non supportato: {chart_type}"}
 
     return {"chart3d": data}
-
-
 
 def fetch_news(category_filter=None):
     """Recupera notizie da fonti italiane - economia e sport"""
@@ -596,423 +540,53 @@ def call_ollama(prompt: str, model: str = MODEL, mode: str = "general"):
         print(f"Errore Ollama: {e}")
         return error_msg
 
-class AIHandler(http.server.BaseHTTPRequestHandler):
-    def send_cors_headers(self):
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-API-Key, Authorization')
+def generate_matplotlib_plot(chart_data, chart_type='line'):
+    """Genera un grafico con Matplotlib come in JupyterLab e lo restituisce come base64"""
+    try:
+        plt.figure(figsize=(10, 6))
+        plt.style.use('default')  # Stile simile a Jupyter
 
-    def _extract_api_key(self):
-        """Estrae API key dagli header o parametri URL (Best Practice: Sicurezza)"""
-        # Priorità: X-API-Key > Authorization Bearer > Parametro URL (per compatibilità mobile)
-        if 'X-API-Key' in self.headers:
-            return self.headers['X-API-Key'].strip()
-        elif 'Authorization' in self.headers:
-            auth_header = self.headers['Authorization']
-            if auth_header.startswith('Bearer '):
-                return auth_header[7:].strip()
-        else:
-            # Supporto per API key come parametro URL (utile per cellulari)
-            try:
-                parsed_url = urllib.parse.urlparse(self.path)
-                query_params = urllib.parse.parse_qs(parsed_url.query)
-                print(f"DEBUG: Parsed URL path: {self.path}")
-                print(f"DEBUG: Query params: {query_params}")
-                if 'api_key' in query_params:
-                    api_key_from_url = query_params['api_key'][0].strip()
-                    print(f"DEBUG: API key from URL: {api_key_from_url}")
-                    return api_key_from_url
+        data = chart_data.get('datasets', [])
+        labels = chart_data.get('labels', [])
+
+        if chart_type == 'line':
+            for dataset in data:
+                if labels:
+                    plt.plot(labels, dataset['data'], label=dataset.get('label', ''))
                 else:
-                    print("DEBUG: No api_key found in URL parameters")
-            except Exception as e:
-                print(f"Errore parsing URL per API key: {e}")
-                import traceback
-                traceback.print_exc()
-        return None
-
-    def _send_auth_error(self, message):
-        """Invia errore di autenticazione (Best Practice: UX)"""
-        self.send_response(401)
-        self.send_header('Content-Type', 'application/json')
-        self.send_cors_headers()
-        self.end_headers()
-        response = {
-            "error": "Autenticazione fallita",
-            "message": message,
-            "valid_keys": list(VALID_API_KEYS.keys())
-        }
-        self.wfile.write(json.dumps(response).encode())
-
-    def do_GET(self):
-        print(f"GET request: {self.path}")
-        
-        # Verifica API Key per tutti gli endpoint (Best Practice: Sicurezza)
-        api_key = self._extract_api_key()
-        if not api_key:
-            self._send_auth_error("API Key richiesta")
-            return
-            
-        key_info = verify_api_key(api_key)
-        if not key_info:
-            self._send_auth_error("API Key non valida")
-            return
-        
-        # Log dell'accesso per audit (Best Practice: Logging)
-        print(f"[AUTH] Accesso consentito per key: {key_info['role']} - IP: {self.client_address[0]}")
-        
-        if self.path == "/":
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.send_cors_headers()
-            self.end_headers()
-            response = {
-                "message": "Assistente AI Backend",
-                "status": "online",
-                "keyboard_shortcuts": {
-                    "send_message": "Premi Enter per inviare il messaggio",
-                    "new_line": "Premi Shift+Enter per andare a capo",
-                    "voice_input": "Clicca sull'icona 🎤 per input vocale",
-                    "copy_message": "Clicca sull'icona 📋 per copiare le risposte",
-                    "speak_message": "Clicca sull'icona 🔊 per ascoltare le risposte"
-                }
-            }
-            self.wfile.write(json.dumps(response).encode())
-        elif self.path == "/api/health":
-            print("Health check")
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.send_cors_headers()
-            self.end_headers()
-            response = {"status": "healthy", "model": MODEL}
-            self.wfile.write(json.dumps(response).encode())
-        elif self.path == "/api/models":
-            models = get_available_models()
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.send_cors_headers()
-            self.end_headers()
-            response = {"models": models, "recommended": "llama3.2:3b"}
-            self.wfile.write(json.dumps(response).encode())
-        elif self.path == "/api/code/languages":
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.send_cors_headers()
-            self.end_headers()
-            response = {
-                'languages': [
-                    {
-                        'name': 'Python',
-                        'value': 'python',
-                        'execution': True,
-                        'analysis': True
-                    },
-                    {
-                        'name': 'JavaScript',
-                        'value': 'javascript',
-                        'execution': True,
-                        'analysis': True
-                    },
-                    {
-                        'name': 'C++',
-                        'value': 'cpp',
-                        'execution': True,
-                        'analysis': False
-                    },
-                    {
-                        'name': 'TypeScript',
-                        'value': 'typescript',
-                        'execution': False,
-                        'analysis': True
-                    }
-                ]
-            }
-            self.wfile.write(json.dumps(response).encode())
-        elif self.path == "/docs":
-            self.send_response(200)
-            self.send_header('Content-type', 'text/html')
-            self.send_cors_headers()
-            self.end_headers()
-            docs_html = """
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Documentation - Assistente AI</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { color: #333; }
-        h2 { color: #555; border-bottom: 2px solid #4f46e5; padding-bottom: 5px; }
-        .endpoint { background: #f8f9fa; padding: 15px; margin: 10px 0; border-left: 4px solid #4f46e5; }
-        .method { font-weight: bold; color: #4f46e5; }
-        code { background: #e9ecef; padding: 2px 4px; border-radius: 3px; }
-        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>📚 API Documentation - Assistente AI</h1>
-        <p>Documentazione degli endpoint API disponibili.</p>
-        <h2>Endpoint Disponibili</h2>
-        <div class="endpoint">
-            <div class="method">GET /</div>
-            <p>Informazioni di base sull'assistente AI.</p>
-        </div>
-        <div class="endpoint">
-            <div class="method">GET /api/health</div>
-            <p>Controllo dello stato del backend.</p>
-        </div>
-        <div class="endpoint">
-            <div class="method">GET /api/models</div>
-            <p>Lista dei modelli Ollama disponibili.</p>
-        </div>
-        <div class="endpoint">
-            <div class="method">POST /api/chat</div>
-            <p>Invia un messaggio e ottieni una risposta dall'AI.</p>
-        </div>
-        <div class="endpoint">
-            <div class="method">POST /api/chart3d</div>
-            <p>Genera grafici 3D.</p>
-        </div>
-    </div>
-</body>
-</html>
-"""
-            self.wfile.write(docs_html.encode())
-        else:
-            self.send_response(404)
-            self.send_cors_headers()
-            self.end_headers()
-
-    def do_POST(self):
-        try:
-            # Verifica API Key per tutti gli endpoint (Best Practice: Sicurezza)
-            api_key = self._extract_api_key()
-            if not api_key:
-                self._send_auth_error("API Key richiesta")
-                return
-
-            key_info = verify_api_key(api_key)
-            if not key_info:
-                self._send_auth_error("API Key non valida")
-                return
-
-            # Log dell'accesso per audit (Best Practice: Logging)
-            print(f"[AUTH] Accesso consentito per key: {key_info['role']} - IP: {self.client_address[0]}")
-
-            if self.path == "/api/chat":
-                content_length = int(self.headers['Content-Length'])
-                post_data = self.rfile.read(content_length)
-                data = json.loads(post_data.decode())
-
-                text = data.get("text", "")
-                mode = data.get("mode", "auto")
-                model = data.get("model", MODEL)
-                custom_prompts = data.get("prompts", SYSTEM_PROMPTS)
-
-                if mode == "auto":
-                    mode = detect_mode(text)
-
-                system_prompt = custom_prompts.get(mode, custom_prompts["general"])
-                full_prompt = f"{system_prompt}\n\n{text}\n\nRisposta:"
-
-                response_text = call_ollama(full_prompt, model)
-
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.send_cors_headers()
-                self.end_headers()
-
-                response = {"response": response_text, "mode": mode}
-                self.wfile.write(json.dumps(response).encode())
-
-            elif self.path == "/api/matplotlib":
-                content_length = int(self.headers['Content-Length'])
-                post_data = self.rfile.read(content_length)
-                data = json.loads(post_data.decode())
-
-                chart_type = data.get("type", "line")
-
-                if chart_type == "parametric3d_seaborn":
-                    # Gestisci grafico parametrico 3D con Seaborn
-                    func_x = data.get("func_x", "cos(t)")
-                    func_y = data.get("func_y", "sin(t)")
-                    func_z = data.get("func_z", "t")
-                    points = data.get("points", 200)
-
-                    image_url = generate_seaborn_parametric_3d(func_x, func_y, func_z, points)
-                elif chart_type == "scatter3d_seaborn":
-                    # Gestisci scatter 3D con Seaborn (se disponibile)
-                    points = data.get("points", 100)
-                    if SEABORN_AVAILABLE:
-                        image_url = generate_seaborn_scatter_3d(points)
-                    else:
-                        image_url = generate_matplotlib_plot({"error": "Seaborn non disponibile"}, "line")
-                elif chart_type == "surface3d_seaborn":
-                    # Gestisci superficie 3D con Seaborn (se disponibile)
-                    if SEABORN_AVAILABLE:
-                        image_url = generate_seaborn_surface_3d()
-                    else:
-                        image_url = generate_matplotlib_plot({"error": "Seaborn non disponibile"}, "line")
+                    plt.plot(dataset['data'], label=dataset.get('label', ''))
+        elif chart_type == 'bar':
+            for i, dataset in enumerate(data):
+                if labels:
+                    x = labels
                 else:
-                    chart_data = data.get("data", {})
-                    image_url = generate_matplotlib_plot(chart_data, chart_type)
+                    x = range(len(dataset['data']))
+                plt.bar([xi + i*0.2 for xi in x], dataset['data'], width=0.2, label=dataset.get('label', ''))
+        elif chart_type == 'scatter':
+            for dataset in data:
+                x = [p[0] for p in dataset['data']]
+                y = [p[1] for p in dataset['data']]
+                plt.scatter(x, y, label=dataset.get('label', ''))
+        elif chart_type == 'pie':
+            for dataset in data:
+                plt.pie(dataset['data'], labels=labels, autopct='%1.1f%%')
 
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.send_cors_headers()
-                self.end_headers()
+        plt.title(chart_data.get('title', 'Grafico'))
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
 
-                response = {"image": image_url}
-                self.wfile.write(json.dumps(response).encode())
+        # Salva come base64
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        plt.close()
 
-            elif self.path == "/api/chart3d":
-                content_length = int(self.headers['Content-Length'])
-                post_data = self.rfile.read(content_length)
-                data = json.loads(post_data.decode())
+        return f"data:image/png;base64,{image_base64}"
 
-                chart_type = data.get("type", "surface")
-                params = data.get("params", {})
-
-                chart_data = create_3d_chart_response(chart_type, params)
-
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.send_cors_headers()
-                self.end_headers()
-
-                self.wfile.write(json.dumps(chart_data).encode())
-
-            elif self.path == "/api/code/analyze":
-                content_length = int(self.headers['Content-Length'])
-                post_data = self.rfile.read(content_length)
-                data = json.loads(post_data.decode())
-
-                code = data.get("code", "")
-                language = data.get("language", "python")
-
-                try:
-                    if language == 'python':
-                        analysis = analyze_python_code(code)
-                    elif language in ['javascript', 'typescript']:
-                        analysis = analyze_javascript_code(code)
-                    else:
-                        analysis = {'error': f'Analisi {language} non supportata'}
-
-                    self.send_response(200)
-                    self.send_header('Content-type', 'application/json')
-                    self.send_cors_headers()
-                    self.end_headers()
-
-                    response = {
-                        'success': True,
-                        'language': language,
-                        'analysis': analysis
-                    }
-                    self.wfile.write(json.dumps(response).encode())
-
-                except Exception as e:
-                    self.send_response(500)
-                    self.send_cors_headers()
-                    self.end_headers()
-                    response = {'success': False, 'error': str(e)}
-                    self.wfile.write(json.dumps(response).encode())
-
-            elif self.path == "/api/code/execute":
-                content_length = int(self.headers['Content-Length'])
-                post_data = self.rfile.read(content_length)
-                data = json.loads(post_data.decode())
-
-                code = data.get("code", "")
-                language = data.get("language", "python")
-                timeout = min(data.get("timeout", 5), 10)  # Max 10 secondi
-
-                try:
-                    if language == 'python':
-                        success, output, errors, exec_time = execute_python_safe(code, timeout)
-                        analysis = analyze_python_code(code) if success else None
-                    elif language == 'javascript':
-                        success, output, errors, exec_time = execute_javascript_node(code, timeout)
-                        analysis = analyze_javascript_code(code) if success else None
-                    elif language == 'cpp':
-                        success, output, errors, exec_time = execute_cpp_code(code, timeout)
-                        analysis = None
-                    else:
-                        raise Exception(f"Linguaggio {language} non supportato")
-
-                    self.send_response(200)
-                    self.send_header('Content-type', 'application/json')
-                    self.send_cors_headers()
-                    self.end_headers()
-
-                    response = {
-                        'success': success,
-                        'output': output,
-                        'errors': errors,
-                        'execution_time': exec_time,
-                        'analysis': analysis
-                    }
-                    self.wfile.write(json.dumps(response).encode())
-
-                except Exception as e:
-                    self.send_response(500)
-                    self.send_cors_headers()
-                    self.end_headers()
-                    response = {'success': False, 'error': str(e)}
-                    self.wfile.write(json.dumps(response).encode())
-
-            elif self.path.startswith("/api/news/"):
-                try:
-                    # Estrai categoria dal path: /api/news/economia, /api/news/sport, /api/news/all
-                    path_parts = self.path.split('/')
-                    category = path_parts[-1] if len(path_parts) > 3 else 'all'
-
-                    if category == 'all':
-                        category_filter = None
-                    elif category == 'economia':
-                        category_filter = ['economia']
-                    elif category == 'sport':
-                        category_filter = ['sport']
-                    elif category == 'generale':
-                        category_filter = ['generale']
-                    else:
-                        category_filter = [category]
-
-                    news = fetch_news(category_filter)
-                    self.send_response(200)
-                    self.send_header('Content-type', 'application/json')
-                    self.send_cors_headers()
-                    self.end_headers()
-                    response = {'news': news}
-                    self.wfile.write(json.dumps(response).encode())
-                except Exception as e:
-                    self.send_response(500)
-                    self.send_cors_headers()
-                    self.end_headers()
-                    response = {'error': f'Errore nel recupero notizie: {str(e)}'}
-                    self.wfile.write(json.dumps(response).encode())
-
-            else:
-                self.send_response(404)
-                self.send_cors_headers()
-                self.end_headers()
-        except Exception as e:
-            print(f"Error in do_POST: {e}")
-            import traceback
-            traceback.print_exc()
-            self.send_response(500)
-            self.send_cors_headers()
-            self.end_headers()
-
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_cors_headers()
-        self.end_headers()
-
-# ============================================
-# CODE ANALYSIS FUNCTIONS
-# ============================================
+    except Exception as e:
+        return f"Errore generazione grafico: {str(e)}"
 
 def analyze_python_code(code: str) -> dict:
     """Analizza codice Python e restituisce metriche"""
@@ -1082,10 +656,6 @@ def analyze_javascript_code(code: str) -> dict:
         'lines': len(lines),
         'comments': comments
     }
-
-# ============================================
-# CODE EXECUTION FUNCTIONS
-# ============================================
 
 def execute_python_safe(code: str, timeout: int = 5) -> tuple:
     """Esegue Python in modo sicuro con timeout"""
@@ -1373,26 +943,3 @@ def generate_seaborn_surface_3d():
     except Exception as e:
         print(f"Errore generazione Seaborn surface 3D: {e}")
         return generate_matplotlib_plot({"error": str(e)}, "line")
-
-def run_server():
-    try:
-        host = os.getenv('SERVER_HOST', '0.0.0.0')
-        port = int(os.getenv('SERVER_PORT', '5008'))
-
-        print(f"Starting server on {host}:{port}")
-        print("Creating TCPServer...")
-        httpd = socketserver.ThreadingTCPServer((host, port), AIHandler)
-        print("TCPServer created")
-        print(f"🚀 Assistente AI Backend avviato su {host}:{port}")
-        print("🌐 Frontend: http://localhost:8080")
-        print(f"🔐 API Keys caricate: {len(VALID_API_KEYS)}")
-        print(f"⚡ Cache abilitata: {os.getenv('ENABLE_CACHE', 'true')}")
-        print("Calling serve_forever...")
-        httpd.serve_forever()
-    except Exception as e:
-        print(f"Errore avvio server: {e}")
-        import traceback
-        traceback.print_exc()
-
-if __name__ == "__main__":
-    run_server()
