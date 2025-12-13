@@ -1,8 +1,8 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Assistente AI Finanziario
-Comment=Avvia il sistema Assistente AI con Gunicorn
+Name=Wildlux AI
+Comment=Avvia il sistema Wildlux AI con Gunicorn
 Exec=bash -c "cd /home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo && ./launcher_stable.sh"
 Icon=/home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo/ICONA/ICONA.png
 Path=/home/wildlux/Desktop/Assistente_Finanziario_AI/assistente-ai-completo
@@ -17,9 +17,9 @@ X-GNOME-SingleWindow=false
 X-GNOME-Autostart-enabled=false
 
 # Descrizione estesa
-GenericName=Assistente AI
-GenericName[it]=Assistente AI Finanziario
-Comment[it]=Sistema AI per consulenza finanziaria con Ollama e Gunicorn
+GenericName=Wildlux AI
+GenericName[it]=Wildlux AI
+Comment[it]=Sistema AI Wildlux con Ollama e Gunicorn
 
 # Impostazioni per il terminale
 X-GNOME-Terminal=true
