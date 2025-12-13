@@ -1352,7 +1352,7 @@ function toggleSpeech() {
     localStorage.setItem('speech_enabled', speechEnabled);
 }
 
-function speakText(text, lang = 'it-IT') {
+function speakText(text, lang = null) {
     if (!speechEnabled || !speechSynthesis) return;
 
     // Ferma eventuali letture in corso
@@ -1481,7 +1481,6 @@ function speakText(buttonElement) {
 
     // Crea e avvia la sintesi
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.lang = 'it-IT'; // Italiano
     utterance.rate = 0.9; // Velocità leggermente ridotta
     utterance.pitch = 1; // Tono normale
     utterance.volume = 0.8; // Volume leggermente ridotto
