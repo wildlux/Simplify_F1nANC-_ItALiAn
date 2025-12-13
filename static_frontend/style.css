@@ -573,8 +573,11 @@ code {
 @media (max-width: 768px) {
     .terminal-header {
         flex-direction: column;
-        gap: 1rem;
         padding: 1rem;
+    }
+
+    .quick-actions {
+        display: none !important;
     }
 
     .controls {
