@@ -1859,6 +1859,255 @@ function toggleSidebar() {
     }
 }
 
+// ==================== MODAL GRAFICI ====================
+
+function showChartModal() {
+    document.getElementById('chartModal').style.display = 'block';
+}
+
+function closeChartModal() {
+    document.getElementById('chartModal').style.display = 'none';
+}
+
+function showLineChart() {
+    const data = [{
+        x: [1, 2, 3, 4, 5],
+        y: [1, 4, 9, 16, 25],
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'y = x²'
+    }];
+    const layout = {
+        title: 'Grafico Lineare - y = x²',
+        xaxis: { title: 'X' },
+        yaxis: { title: 'Y' }
+    };
+    Plotly.newPlot('chart', data, layout);
+    document.getElementById('chartTitle').textContent = 'Grafico Lineare';
+    document.getElementById('codeExample').innerHTML = `
+<pre><code>// JavaScript con Plotly
+const data = [{
+    x: [1, 2, 3, 4, 5],
+    y: [1, 4, 9, 16, 25],
+    type: 'scatter',
+    mode: 'lines+markers'
+}];
+Plotly.newPlot('chart', data, layout);</code></pre>
+    `;
+}
+
+function showBarChart() {
+    const data = [{
+        x: ['A', 'B', 'C', 'D', 'E'],
+        y: [10, 20, 15, 25, 30],
+        type: 'bar',
+        name: 'Valori'
+    }];
+    const layout = {
+        title: 'Grafico a Barre',
+        xaxis: { title: 'Categorie' },
+        yaxis: { title: 'Valori' }
+    };
+    Plotly.newPlot('chart', data, layout);
+    document.getElementById('chartTitle').textContent = 'Grafico a Barre';
+    document.getElementById('codeExample').innerHTML = `
+<pre><code>// JavaScript con Plotly
+const data = [{
+    x: ['A', 'B', 'C', 'D', 'E'],
+    y: [10, 20, 15, 25, 30],
+    type: 'bar'
+}];
+Plotly.newPlot('chart', data, layout);</code></pre>
+    `;
+}
+
+function showPieChart() {
+    const data = [{
+        labels: ['A', 'B', 'C', 'D'],
+        values: [30, 20, 25, 25],
+        type: 'pie'
+    }];
+    const layout = {
+        title: 'Grafico a Torta'
+    };
+    Plotly.newPlot('chart', data, layout);
+    document.getElementById('chartTitle').textContent = 'Grafico a Torta';
+    document.getElementById('codeExample').innerHTML = `
+<pre><code>// JavaScript con Plotly
+const data = [{
+    labels: ['A', 'B', 'C', 'D'],
+    values: [30, 20, 25, 25],
+    type: 'pie'
+}];
+Plotly.newPlot('chart', data, layout);</code></pre>
+    `;
+}
+
+function showScatter3D() {
+    const data = [{
+        x: [1, 2, 3, 4, 5],
+        y: [1, 4, 9, 16, 25],
+        z: [1, 8, 27, 64, 125],
+        mode: 'markers',
+        type: 'scatter3d',
+        name: 'Punti 3D'
+    }];
+    const layout = {
+        title: 'Scatter 3D',
+        scene: {
+            xaxis: { title: 'X' },
+            yaxis: { title: 'Y' },
+            zaxis: { title: 'Z' }
+        }
+    };
+    Plotly.newPlot('chart', data, layout);
+    document.getElementById('chartTitle').textContent = 'Scatter 3D';
+    document.getElementById('codeExample').innerHTML = `
+<pre><code>// JavaScript con Plotly
+const data = [{
+    x: [1, 2, 3, 4, 5],
+    y: [1, 4, 9, 16, 25],
+    z: [1, 8, 27, 64, 125],
+    mode: 'markers',
+    type: 'scatter3d'
+}];
+Plotly.newPlot('chart', data, layout);</code></pre>
+    `;
+}
+
+function showSurface3D() {
+    const data = [{
+        type: 'surface',
+        x: [1, 2, 3, 4, 5],
+        y: [1, 2, 3, 4, 5],
+        z: [
+            [1, 4, 9, 16, 25],
+            [2, 5, 10, 17, 26],
+            [3, 6, 11, 18, 27],
+            [4, 7, 12, 19, 28],
+            [5, 8, 13, 20, 29]
+        ]
+    }];
+    const layout = {
+        title: 'Superficie 3D',
+        scene: {
+            xaxis: { title: 'X' },
+            yaxis: { title: 'Y' },
+            zaxis: { title: 'Z' }
+        }
+    };
+    Plotly.newPlot('chart', data, layout);
+    document.getElementById('chartTitle').textContent = 'Superficie 3D';
+    document.getElementById('codeExample').innerHTML = `
+<pre><code>// JavaScript con Plotly
+const data = [{
+    type: 'surface',
+    z: [
+        [1, 4, 9, 16, 25],
+        [2, 5, 10, 17, 26],
+        [3, 6, 11, 18, 27],
+        [4, 7, 12, 19, 28],
+        [5, 8, 13, 20, 29]
+    ]
+}];
+Plotly.newPlot('chart', data, layout);</code></pre>
+    `;
+}
+
+function showCandlestick() {
+    const data = [{
+        x: ['2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04'],
+        open: [100, 105, 102, 108],
+        high: [110, 115, 112, 118],
+        low: [95, 100, 97, 103],
+        close: [105, 110, 105, 115],
+        type: 'candlestick'
+    }];
+    const layout = {
+        title: 'Grafico Candlestick',
+        xaxis: { title: 'Data' },
+        yaxis: { title: 'Prezzo' }
+    };
+    Plotly.newPlot('chart', data, layout);
+    document.getElementById('chartTitle').textContent = 'Candlestick';
+    document.getElementById('codeExample').innerHTML = `
+<pre><code>// JavaScript con Plotly
+const data = [{
+    x: ['2023-01-01', '2023-01-02'],
+    open: [100, 105],
+    high: [110, 115],
+    low: [95, 100],
+    close: [105, 110],
+    type: 'candlestick'
+}];
+Plotly.newPlot('chart', data, layout);</code></pre>
+    `;
+}
+
+function showHeatmap() {
+    const data = [{
+        z: [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ],
+        type: 'heatmap'
+    }];
+    const layout = {
+        title: 'Heatmap'
+    };
+    Plotly.newPlot('chart', data, layout);
+    document.getElementById('chartTitle').textContent = 'Heatmap';
+    document.getElementById('codeExample').innerHTML = `
+<pre><code>// JavaScript con Plotly
+const data = [{
+    z: [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+    type: 'heatmap'
+}];
+Plotly.newPlot('chart', data, layout);</code></pre>
+    `;
+}
+
+function showMultiAxis() {
+    const data = [
+        {
+            x: [1, 2, 3, 4],
+            y: [10, 11, 12, 13],
+            name: 'Serie 1',
+            type: 'scatter'
+        },
+        {
+            x: [1, 2, 3, 4],
+            y: [20, 21, 22, 23],
+            name: 'Serie 2',
+            yaxis: 'y2',
+            type: 'scatter'
+        }
+    ];
+    const layout = {
+        title: 'Multi-Asse',
+        yaxis: { title: 'Y1' },
+        yaxis2: {
+            title: 'Y2',
+            overlaying: 'y',
+            side: 'right'
+        }
+    };
+    Plotly.newPlot('chart', data, layout);
+    document.getElementById('chartTitle').textContent = 'Multi-Asse';
+    document.getElementById('codeExample').innerHTML = `
+<pre><code>// JavaScript con Plotly
+const data = [
+    { x: [1,2,3,4], y: [10,11,12,13], type: 'scatter' },
+    { x: [1,2,3,4], y: [20,21,22,23], yaxis: 'y2', type: 'scatter' }
+];
+const layout = {
+    yaxis2: { overlaying: 'y', side: 'right' }
+};
+Plotly.newPlot('chart', data, layout);</code></pre>
+    `;
+}
+
 function closeSettings() {
     document.getElementById('settingsModal').style.display = 'none';
 }
